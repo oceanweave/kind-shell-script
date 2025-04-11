@@ -50,7 +50,10 @@ $ kt list
 $ kt delete 3-node-cluster
 
 # 加载指定镜像到指定集群
-$ kt load 3-node-cluster busybox:latest
+# 简化操作，加载到当前集群
+$ kt load busybox:latest
+# 加载到指定集群
+$ kt load busybox:latest 3-node-1.24.3
 
 
 # 查看帮助信息

@@ -35,7 +35,7 @@ usage() {
   echo "      --default                         Create a cluster using the default image version (k8s 1.24.3)"
   echo "  delete <cluster-name>                 Delete the Kind cluster"
   echo "  export-kubeconfig <cluster-name>      Export Kubeconfig for cluster, Short command(ek)"
-  echo "  load-image <cluster-name> <image>     Load Docker image into Kind cluster, Short command(load)"
+  echo "  load-image <image> <cluster-name>     Load Docker image into Kind cluster, Short command(load)"
   echo "  status <cluster-name>                 Get cluster status"
   echo "  list                                  List all existing Kind clusters"
   echo "  use <cluster-name>                    Switch to the specified Kind cluster"
@@ -82,7 +82,7 @@ create_cluster() {
   TEMPLATE=
 
   shift # 移除第一个参数（集群名称）
-  
+
   # 解析命令行参数
   while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -163,8 +163,30 @@ export_kubeconfig() {
 
 # 加载 Docker 镜像到 Kind 集群
 load_image() {
-  CLUSTER_NAME=$1
-  IMAGE_TAG=$2
+  #   遇到任何返回非 0 的命令时立即退出
+  # 一旦脚本中的某个命令返回非零（即执行失败），整个脚本就会立即终止执行。
+  set -e
+
+  IMAGE_TAG="$1"
+  CLUSTER_NAME="$2"
+
+  if [ -z "$IMAGE_TAG" ]; then
+    echo "❌ 请提供镜像名，例如: kt load my-image:latest"
+    exit 1
+  fi
+
+  # 如果未传入集群名，则自动获取当前上下文的 kind 集群名
+  if [ -z "$CLUSTER_NAME" ]; then
+    CONTEXT=$(kubectl config current-context)
+    if [[ "$CONTEXT" == kind-* ]]; then
+      # bash 字符串操作，具体来说是 删除前缀（Prefix Removal）
+      CLUSTER_NAME="${CONTEXT#kind-}"
+      echo "📌 未指定集群名，默认使用当前上下文集群: $CLUSTER_NAME"
+    else
+      echo "❌ 当前上下文不是 kind 集群，请指定集群名"
+      exit 1
+    fi
+  fi
   echo "💾 Loading Docker image '$IMAGE_TAG' into Kind cluster '$CLUSTER_NAME'..."
 
   # 打印并执行加载镜像命令
@@ -253,8 +275,8 @@ case "$1" in
     use_cluster "$2"
     ;;
   "load"|"load-image")
-    if [ -z "$2" ] || [ -z "$3" ]; then
-      echo "Both cluster name and image tag are required!"
+    if [ -z "$2" ] ; then
+      echo "Image tag are required!"
       usage
     fi
     load_image "$2" "$3"
