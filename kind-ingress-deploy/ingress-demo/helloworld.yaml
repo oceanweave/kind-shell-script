@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helloworld
+  template:
+    metadata:
+      labels:
+        app: helloworld
+    spec:
+      containers:
+      - name: helloworld
+        image: wouterm/helloworld:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+---
+# 测试：helloworld 的 8777 端口收到请求后，将会转发到后端 pod 的 80 端口，是个 nginx 服务，返回 hello world 信息
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld
+spec:
+  selector:
+    app: helloworld
+  ports:
+  - port: 8777
+    targetPort: 80
