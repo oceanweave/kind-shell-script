@@ -1,0 +1,39 @@
+#Using template '3node-template' from /Users/dufengyang/B-处理区/2025工作/kind脚本/cluster-demo-setting/3node-template.yaml...
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: 3-node-1.24.3
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          name: 3-node-1.24.3-master
+          kubeletExtraArgs:
+            node-labels: "gpu=on"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 8443
+        protocol: TCP
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          name: 3-node-1.24.3-node1
+          kubeletExtraArgs:
+            node-labels: "gpu=on"
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          name: 3-node-1.24.3-node2
+          kubeletExtraArgs:
+            node-labels: "gpu=on"

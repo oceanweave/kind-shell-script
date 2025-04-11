@@ -1,0 +1,38 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: ${KT_CLUSTER_NAME}
+
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          name: ${KT_CLUSTER_NAME}-master
+          kubeletExtraArgs:
+            node-labels: "gpu=on"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 8080
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 8443
+        protocol: TCP
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          name: ${KT_CLUSTER_NAME}-node1
+          kubeletExtraArgs:
+            node-labels: "gpu=on"
+
+  - role: worker
+    kubeadmConfigPatches:
+      - |
+        kind: JoinConfiguration
+        nodeRegistration:
+          name: ${KT_CLUSTER_NAME}-node2
+          kubeletExtraArgs:
+            node-labels: "gpu=on"

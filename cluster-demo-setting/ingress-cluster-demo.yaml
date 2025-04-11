@@ -1,0 +1,25 @@
+# 创建2个节点，一个master node，一个worker node，在master node设置labels，配合后续安装ingress controller
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+# k8s master 节点进行了如下设置，映射自身 80 端口到宿主机 80 端口，因为 ingress-controller 需要使用 80 端口，这样通过宿主机 80 端口即可访问
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  # 必须在创建 kind k8s 集群时指定需要使用的 宿主机端口，创建后无法添加
+  # 此处将 kind mater node 节点的 80 端口，映射为宿主机的 80 端口
+  # 之后部署 ingress-nginx-controller 时候，外面就可以通过 80 端口访问 ingress
+  # 同理，若想要创建 Nodeport，需要在创建集群的时候指定一个端口 如 40010，之后 kind 集群内创建 Nodeport 服务需要用此端口 40010，外部才能访问
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+# k8s node 节点无其他配置
+- role: worker
